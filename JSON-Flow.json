@@ -1,0 +1,622 @@
+{
+  "description": "Simple Survey",
+  "states": [
+    {
+      "name": "Trigger",
+      "type": "trigger",
+      "transitions": [
+        {
+          "next": "first_question",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "incomingCall"
+        },
+        {
+          "next": "first_question",
+          "event": "incomingRequest"
+        },
+        {
+          "event": "incomingParent"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -190,
+          "y": -110
+        }
+      }
+    },
+    {
+      "name": "first_question",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "check_response_1",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 70,
+          "y": 120
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "What is your first name?",
+        "timeout": "60"
+      }
+    },
+    {
+      "name": "check_response_1",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "unknown_answer_1",
+          "event": "noMatch"
+        },
+        {
+          "next": "second_question",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "1-10",
+              "arguments": [
+                "{{widgets.first_question.inbound.Body}}"
+              ],
+              "type": "is_not_blank",
+              "value": "Is Not Blank"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.first_question.inbound.Body}}",
+        "offset": {
+          "x": 70,
+          "y": 340
+        }
+      }
+    },
+    {
+      "name": "unknown_answer_1",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "first_question",
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -400,
+          "y": 280
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "I'm sorry, you answar was empty"
+      }
+    },
+    {
+      "name": "second_question",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "check_response_2",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 70,
+          "y": 560
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "How old are you?",
+        "timeout": "60"
+      }
+    },
+    {
+      "name": "check_response_2",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "unknown_answer_2",
+          "event": "noMatch"
+        },
+        {
+          "next": "third_question",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "1-10",
+              "arguments": [
+                "{{widgets.second_question.inbound.Body}}"
+              ],
+              "type": "regex",
+              "value": "\\b([0-9]|[1-9][0-9])\\b"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.second_question.inbound.Body}}",
+        "offset": {
+          "x": 70,
+          "y": 780
+        }
+      }
+    },
+    {
+      "name": "unknown_answer_2",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "second_question",
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -320,
+          "y": 650
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "I'm sorry, I didn't understand. Please enter a number from 1 - 100."
+      }
+    },
+    {
+      "name": "thank_you",
+      "type": "send-message",
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 120,
+          "y": 2880
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "Thank you so much for your feedback!"
+      }
+    },
+    {
+      "name": "send_results_to_server",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "thank_you",
+          "event": "success"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 430,
+          "y": 2610
+        },
+        "method": "POST",
+        "parameters": [
+          {
+            "value": "{{widgets.first_question.inbound.Body}} ",
+            "key": "Name"
+          },
+          {
+            "value": "{{widgets.second_question.inbound.Body}} ",
+            "key": "Age"
+          },
+          {
+            "value": "{{widgets.third_question.inbound.Body}} ",
+            "key": "has_pet"
+          },
+          {
+            "value": "{{widgets.Fifth_question.inbound.Body}}",
+            "key": "Movie"
+          }
+        ],
+        "url": "https://webhook.site/8df678a3-887c-4b6f-a768-6dafcf697362",
+        "timeout": 3600
+      }
+    },
+    {
+      "name": "third_question",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "Check_response_3",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 70,
+          "y": 1050
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "Do you have a pet?\n1- Yes\n2- No",
+        "timeout": "60"
+      }
+    },
+    {
+      "name": "Check_response_3",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "Unknown_answer_3",
+          "event": "noMatch"
+        },
+        {
+          "next": "Fourth_question",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Yes",
+              "arguments": [
+                "{{widgets.third_question.inbound.Body}}"
+              ],
+              "type": "equal_to",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "next": "Fifth_question",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "no",
+              "arguments": [
+                "{{widgets.third_question.inbound.Body}}"
+              ],
+              "type": "equal_to",
+              "value": "2"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.third_question.inbound.Body}}",
+        "offset": {
+          "x": 70,
+          "y": 1310
+        }
+      }
+    },
+    {
+      "name": "Unknown_answer_3",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "third_question",
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -290,
+          "y": 1230
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "I'm sorry, your answer is not valid"
+      }
+    },
+    {
+      "name": "Fourth_question",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "Check_response_4",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -70,
+          "y": 1590
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "What is the name of your pet?",
+        "timeout": "60"
+      }
+    },
+    {
+      "name": "Check_response_4",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "Unknown_answer_4",
+          "event": "noMatch"
+        },
+        {
+          "next": "Copy_of_Fifth_question",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Not blanck",
+              "arguments": [
+                "{{widgets.second_question.inbound.Body}}"
+              ],
+              "type": "is_not_blank",
+              "value": "Is Not Blank"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.second_question.inbound.Body}}",
+        "offset": {
+          "x": -70,
+          "y": 1860
+        }
+      }
+    },
+    {
+      "name": "Unknown_answer_4",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "Fourth_question",
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -530,
+          "y": 1720
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "I'm sorry, your answar was empty."
+      }
+    },
+    {
+      "name": "Fifth_question",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "Check_response_5",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 350,
+          "y": 1860
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "What was the last movie you watched?",
+        "timeout": "60"
+      }
+    },
+    {
+      "name": "Check_response_5",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "Unknown_answer_5",
+          "event": "noMatch"
+        },
+        {
+          "next": "send_results_to_server",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Not blanck",
+              "arguments": [
+                "{{widgets.second_question.inbound.Body}}"
+              ],
+              "type": "is_not_blank",
+              "value": "Is Not Blank"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.second_question.inbound.Body}}",
+        "offset": {
+          "x": 420,
+          "y": 2330
+        }
+      }
+    },
+    {
+      "name": "Unknown_answer_5",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "Fifth_question",
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 890,
+          "y": 2060
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "I'm sorry, your answar was empty."
+      }
+    },
+    {
+      "name": "Copy_of_Fifth_question",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "Copy_of_Check_response_5",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -630,
+          "y": 2170
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "What was the last movie you watched?",
+        "timeout": "60"
+      }
+    },
+    {
+      "name": "Copy_of_Check_response_5",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "Copy_of_Unknown_answer_5",
+          "event": "noMatch"
+        },
+        {
+          "next": "Copy_of_send_results_to_server",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Not blanck",
+              "arguments": [
+                "{{widgets.second_question.inbound.Body}}"
+              ],
+              "type": "is_not_blank",
+              "value": "Is Not Blank"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.second_question.inbound.Body}}",
+        "offset": {
+          "x": -620,
+          "y": 2420
+        }
+      }
+    },
+    {
+      "name": "Copy_of_send_results_to_server",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "thank_you",
+          "event": "success"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -610,
+          "y": 2700
+        },
+        "method": "POST",
+        "parameters": [
+          {
+            "value": "{{widgets.first_question.inbound.Body}} ",
+            "key": "Name"
+          },
+          {
+            "value": "{{widgets.second_question.inbound.Body}} ",
+            "key": "Age"
+          },
+          {
+            "value": "{{widgets.third_question.inbound.Body}} ",
+            "key": "has_pet"
+          },
+          {
+            "value": "{{widgets.Fifth_question.inbound.Body}}",
+            "key": "Movie"
+          },
+          {
+            "value": "{{widgets.Fourth_question.inbound.Body}}",
+            "key": "pet_name"
+          }
+        ],
+        "url": "https://webhook.site/8df678a3-887c-4b6f-a768-6dafcf697362",
+        "timeout": 3600
+      }
+    },
+    {
+      "name": "Copy_of_Unknown_answer_5",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "Copy_of_Fifth_question",
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -60,
+          "y": 2250
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "I'm sorry, your answar was empty."
+      }
+    }
+  ],
+  "initial_state": "Trigger",
+  "flags": {
+    "allow_concurrent_calls": true
+  }
+}
